@@ -1,0 +1,35 @@
+# ─── Core ──────────────────────────────────────────────────────────────────
+Django>=4.2,<5.0
+djangorestframework>=3.14,<4.0
+djangorestframework-simplejwt>=5.3,<6.0
+django-cors-headers>=4.3,<5.0
+django-filter>=23.5
+
+# ─── Media / Images ────────────────────────────────────────────────────────
+# Pillow 10.x fails to build on Python 3.13+; 11.x ships prebuilt wheels.
+Pillow>=11.0,<12.0
+
+# ─── Payments ──────────────────────────────────────────────────────────────
+razorpay>=1.4,<2.0
+
+# ─── Database ──────────────────────────────────────────────────────────────
+psycopg2-binary>=2.9,<3.0
+dj-database-url>=2.1,<3.0
+
+# ─── Config & utilities ────────────────────────────────────────────────────
+python-decouple>=3.8,<4.0
+cryptography>=42.0
+shortuuid>=1.0
+
+# ─── Production server ────────────────────────────────────────────────────
+gunicorn>=21.2
+whitenoise>=6.6
+
+# ─── File storage (optional, for S3/Spaces) ───────────────────────────────
+django-storages>=1.14
+boto3>=1.34
+
+# ─── Background tasks (optional) ──────────────────────────────────────────
+celery>=5.3,<6.0
+redis>=5.0
+django-redis>=5.4
