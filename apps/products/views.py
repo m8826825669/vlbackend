@@ -88,19 +88,73 @@ def site_stats(request):
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def demo_request(request):
-    """Stub — captures demo requests as contact form."""
-    from apps.accounts.contact_views import contact_form
-    request._full_data = {
-        'name': request.data.get('name', ''),
-        'email': request.data.get('email', ''),
-        'subject': f"Demo request: {request.data.get('product_name', 'Product')}",
-        'category': 'demo',
-        'message': request.data.get('message') or
-                   f"Please send me a demo of {request.data.get('product_name', '')}. "
-                   f"Phone: {request.data.get('phone', '')}, "
-                   f"Company: {request.data.get('company', '')}.",
-    }
-    return contact_form(request)
+    """
+    Capture demo requests and email the support team.
+
+    Frontend sends:
+        { name, email, phone?, company?, product_name?, message? }
+    """
+    from django.conf import settings as dj_settings
+    from django.core.mail import EmailMessage
+    import logging
+    log = logging.getLogger(__name__)
+
+    name         = (request.data.get('name') or '').strip()
+    email        = (request.data.get('email') or '').strip()
+    phone        = (request.data.get('phone') or '').strip()
+    company      = (request.data.get('company') or '').strip()
+    product_name = (request.data.get('product_name') or 'a product').strip()
+    user_message = (request.data.get('message') or '').strip()
+
+    if not name or not email:
+        return Response(
+            {'detail': 'Name and email are required.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    site_name     = getattr(dj_settings, 'SITE_NAME', 'Vexen Labs')
+    support_email = getattr(dj_settings, 'SUPPORT_EMAIL', 'support@vexenlabs.com')
+
+    body_lines = [
+        f"New demo request from {site_name}.",
+        "",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "  CONTACT",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        f"Name    : {name}",
+        f"Email   : {email}",
+        f"Phone   : {phone or '(not provided)'}",
+        f"Company : {company or '(not provided)'}",
+        f"Product : {product_name}",
+        "",
+    ]
+    if user_message:
+        body_lines += [
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            "  MESSAGE",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            user_message,
+            "",
+        ]
+
+    try:
+        EmailMessage(
+            subject=f"[Demo Request] {product_name} — {name}",
+            body="\n".join(body_lines),
+            from_email=dj_settings.DEFAULT_FROM_EMAIL,
+            to=[support_email],
+            reply_to=[f"{name} <{email}>"],
+        ).send()
+        log.info(f"Demo request: {email} → {product_name}")
+        return Response({
+            'detail': "Thanks! Our team will reach out within 24 hours to schedule your demo.",
+        })
+    except Exception as exc:
+        log.error(f"Demo request email failed: {exc}")
+        return Response(
+            {'detail': f'Failed to send. Please email {support_email} directly.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 # ─── ADMIN ─────────────────────────────────────────────────────────────────

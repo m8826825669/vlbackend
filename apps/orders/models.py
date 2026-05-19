@@ -55,5 +55,5 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_number:
             import random, string
-            self.order_number = 'SC' + ''.join(random.choices(string.digits, k=10))
+            self.order_number = 'VL' + ''.join(random.choices(string.digits, k=10))
         super().save(*args, **kwargs)
